@@ -1,10 +1,13 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import { MyndCommandPalette } from "../../../../packages/ui/src/navigation";
 import { MyndAgentCanvas } from "../../../../packages/ui/src/canvas";
-import { MyndTraceWaterfall, type TraceStep } from "../../../../packages/ui/src/telemetry";
+import { MyndTraceWaterfall } from "../../../../packages/ui/src/telemetry";
+import { MyndDetailDrawer } from "../../../../packages/ui/src/drawer";
+import { MyndCodePlayground } from "../../../../packages/ui/src/playground";
+import { MyndAuthModal } from "../../../../packages/ui/src/auth";
 
-const runtimeMetrics: TraceStep[] = [
+const runtimeMetrics = [
   { id: "1", name: "Agent Core Boot", duration: "110ms", percentage: 100 },
   { id: "2", name: "CRM Node Mapping", duration: "72ms", percentage: 68 },
   { id: "3", name: "Network Security Handshake", duration: "14ms", percentage: 12 },
@@ -12,72 +15,95 @@ const runtimeMetrics: TraceStep[] = [
   { id: "5", name: "ML Inference Call", duration: "1.2s", percentage: 45 },
 ];
 
-const navItems = [
-  { icon: "⬡", label: "Workspace", active: true },
-  { icon: "◈", label: "Agents" },
-  { icon: "▦", label: "Canvas" },
-  { icon: "◉", label: "Pipelines" },
-  { icon: "◎", label: "Monitor" },
-];
-
 export default function MyndDashboardRoot() {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showAuthOverlay, setShowAuthOverlay] = useState(false);
+
   return (
     <div className="flex h-screen w-screen bg-[#030303] text-white overflow-hidden font-sans antialiased">
-      {/* Huly Layout Style Navigation Dock */}
+      {/* Global Shortcut Palette Overlay */}
+      <MyndCommandPalette />
+
+      {/* Slide-out Panel Instance */}
+      <MyndDetailDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title="Agent Alpha Diagnostics">
+        <div className="space-y-4 text-xs text-neutral-400 leading-relaxed">
+          <div className="p-3 rounded-lg border border-white/[0.06] bg-black font-mono text-neutral-300">
+            <span className="text-indigo-400">UUID:</span> mynd-instance-90x2b-alpha
+          </div>
+          <p>This node handles memory consolidation pipelines and logs real-time transactions into the CRM module grid.</p>
+          <MyndCodePlayground />
+        </div>
+      </MyndDetailDrawer>
+
+      {/* Auth Overlay */}
+      {showAuthOverlay && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md">
+          <div className="relative">
+            <button
+              onClick={() => setShowAuthOverlay(false)}
+              className="absolute -top-3 -right-3 z-10 h-7 w-7 rounded-full border border-white/[0.06] bg-[#09090b] text-neutral-400 hover:text-white text-xs flex items-center justify-center transition-colors"
+            >
+              ✕
+            </button>
+            <MyndAuthModal />
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Dock */}
       <aside className="w-16 h-full border-r border-white/[0.06] bg-[#09090b] flex flex-col items-center py-5 justify-between z-20">
         <div className="flex flex-col gap-5 w-full items-center">
-          {/* Logo */}
-          <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 font-bold text-xs">
-            M
-          </div>
-          {navItems.map((item) => (
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-bold text-sm tracking-tighter shadow-md">M</div>
+          <nav className="flex flex-col gap-3 mt-4">
+            <button className="h-9 w-9 rounded-lg bg-white/[0.06] text-white flex items-center justify-center text-sm transition-colors">🤖</button>
             <button
-              key={item.label}
-              className={`flex h-10 w-10 items-center justify-center rounded-lg text-lg transition-all duration-150 ${
-                item.active
-                  ? "bg-white/[0.06] text-white"
-                  : "text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03]"
-              }`}
-              title={item.label}
+              onClick={() => setIsDrawerOpen(true)}
+              className="h-9 w-9 rounded-lg text-neutral-400 hover:bg-white/[0.03] hover:text-white flex items-center justify-center text-sm transition-colors"
+              title="Agent Diagnostics"
             >
-              {item.icon}
+              📊
             </button>
-          ))}
+            <button
+              onClick={() => setShowAuthOverlay(!showAuthOverlay)}
+              className="h-9 w-9 rounded-lg text-neutral-400 hover:bg-white/[0.03] hover:text-white flex items-center justify-center text-sm transition-colors"
+              title="Toggle Identity Portal"
+            >
+              🔐
+            </button>
+            <button className="h-9 w-9 rounded-lg text-neutral-400 hover:bg-white/[0.03] hover:text-white flex items-center justify-center text-sm transition-colors" title="Canvas">◈</button>
+            <button className="h-9 w-9 rounded-lg text-neutral-400 hover:bg-white/[0.03] hover:text-white flex items-center justify-center text-sm transition-colors" title="Pipelines">◉</button>
+          </nav>
         </div>
-        <div className="flex flex-col items-center gap-3">
-          <button className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.03] transition-all duration-150 text-sm">
-            ⚙
-          </button>
-          <div className="h-7 w-7 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 ring-2 ring-white/[0.06]" />
-        </div>
+        <div className="h-8 w-8 rounded-full bg-neutral-900 border border-white/[0.08] flex items-center justify-center text-xs font-mono text-neutral-400">M1</div>
       </aside>
 
-      {/* Dub.co Style Multi-Tenant Top Bar */}
-      <div className="flex flex-1 flex-col">
-        <header className="flex h-12 items-center justify-between border-b border-white/[0.06] bg-[#09090b] px-4 z-10">
+      {/* Primary Workspace Engine Container */}
+      <main className="flex-1 flex flex-col overflow-hidden relative">
+        <header className="h-14 w-full border-b border-white/[0.06] bg-[#09090b]/80 backdrop-blur-md flex items-center justify-between px-6 z-10">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 text-xs text-neutral-300">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               mynd-org / production
             </div>
-            <span className="text-[11px] font-mono text-neutral-600">v0.1.0-alpha</span>
+            <span className="text-[11px] font-mono text-neutral-600">v0.2.0-alpha</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="rounded border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 text-[10px] font-mono text-neutral-500">
-              Cmd+K
-            </span>
-            <span className="text-[11px] font-mono text-neutral-500">3 agents online</span>
+          <div className="flex items-center gap-4">
+            <span className="rounded border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 text-[10px] font-mono text-neutral-500">Cmd+K</span>
+            <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-500">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              3 agents online
+            </div>
           </div>
         </header>
 
-        {/* Main Content Area */}
-        <main className="flex flex-1 overflow-hidden">
-          {/* Left Panel - Agent Canvas (Typebot-style) */}
+        {/* Content Area */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left - Agent Canvas */}
           <div className="flex-1 relative">
             <MyndAgentCanvas>
-              {/* Floating Node Cards */}
+              {/* Node Cards */}
               <div className="absolute top-20 left-16 z-10">
-                <div className="rounded-xl border border-white/[0.06] bg-[#09090b]/90 backdrop-blur-sm p-4 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.8)] w-56">
+                <div className="rounded-xl border border-white/[0.06] bg-[#09090b]/90 backdrop-blur-sm p-4 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.8)] w-56 cursor-pointer hover:border-indigo-500/30 transition-all duration-200" onClick={() => setIsDrawerOpen(true)}>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="h-2 w-2 rounded-full bg-indigo-500" />
                     <span className="text-xs font-medium text-neutral-200">CRM Sync Agent</span>
@@ -92,7 +118,7 @@ export default function MyndDashboardRoot() {
               </div>
 
               <div className="absolute top-20 right-24 z-10">
-                <div className="rounded-xl border border-white/[0.06] bg-[#09090b]/90 backdrop-blur-sm p-4 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.8)] w-56">
+                <div className="rounded-xl border border-white/[0.06] bg-[#09090b]/90 backdrop-blur-sm p-4 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.8)] w-56 cursor-pointer hover:border-purple-500/30 transition-all duration-200">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="h-2 w-2 rounded-full bg-purple-500" />
                     <span className="text-xs font-medium text-neutral-200">ML Inference Node</span>
@@ -106,7 +132,7 @@ export default function MyndDashboardRoot() {
                 </div>
               </div>
 
-              {/* Connection Lines (SVG) */}
+              {/* SVG Connection Lines */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none z-0" style={{ opacity: 0.15 }}>
                 <line x1="25%" y1="35%" x2="65%" y2="35%" stroke="#6366f1" strokeWidth="1" strokeDasharray="4 4" />
                 <line x1="65%" y1="35%" x2="50%" y2="65%" stroke="#a855f7" strokeWidth="1" strokeDasharray="4 4" />
@@ -114,7 +140,7 @@ export default function MyndDashboardRoot() {
               </svg>
 
               <div className="absolute bottom-24 left-16 z-10">
-                <div className="rounded-xl border border-white/[0.06] bg-[#09090b]/90 backdrop-blur-sm p-4 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.8)] w-56">
+                <div className="rounded-xl border border-white/[0.06] bg-[#09090b]/90 backdrop-blur-sm p-4 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.8)] w-56 cursor-pointer hover:border-emerald-500/30 transition-all duration-200">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="h-2 w-2 rounded-full bg-emerald-500" />
                     <span className="text-xs font-medium text-neutral-200">Pipeline Router</span>
@@ -127,16 +153,20 @@ export default function MyndDashboardRoot() {
                   </div>
                 </div>
               </div>
+
+              {/* Embedded Code Playground on Canvas */}
+              <div className="absolute bottom-8 right-8 z-10 w-96">
+                <MyndCodePlayground />
+              </div>
             </MyndAgentCanvas>
           </div>
 
-          {/* Right Panel - Trigger.dev Style Observability */}
+          {/* Right Panel - Observability */}
           <aside className="w-80 border-l border-white/[0.06] bg-[#09090b] flex flex-col overflow-hidden">
             <div className="p-4 border-b border-white/[0.06]">
               <h2 className="text-xs font-semibold tracking-wider text-neutral-400 uppercase">Pipeline Monitor</h2>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {/* Trace Waterfall */}
               <MyndTraceWaterfall steps={runtimeMetrics} />
 
               {/* Live Log Stream */}
@@ -146,16 +176,16 @@ export default function MyndDashboardRoot() {
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
                 <div className="space-y-1.5 font-mono text-[10px]">
-                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">09:04:12</span><span className="text-indigo-400">[agent]</span><span className="text-neutral-400">CRM sync complete</span></div>
-                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">09:04:14</span><span className="text-purple-400">[infer]</span><span className="text-neutral-400">Token batch flushed</span></div>
-                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">09:04:17</span><span className="text-emerald-400">[route]</span><span className="text-neutral-400">Pipeline dispatched</span></div>
-                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">09:04:19</span><span className="text-amber-400">[warn]</span><span className="text-neutral-400">Rate limit approaching</span></div>
-                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">09:04:22</span><span className="text-indigo-400">[agent]</span><span className="text-neutral-400">New session started</span></div>
-                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">09:04:25</span><span className="text-emerald-400">[route]</span><span className="text-neutral-400">Health check passed</span></div>
+                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">10:44:02</span><span className="text-indigo-400">[agent]</span><span className="text-neutral-400">CRM sync complete</span></div>
+                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">10:44:05</span><span className="text-purple-400">[infer]</span><span className="text-neutral-400">Token batch flushed</span></div>
+                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">10:44:08</span><span className="text-emerald-400">[route]</span><span className="text-neutral-400">Pipeline dispatched</span></div>
+                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">10:44:11</span><span className="text-amber-400">[warn]</span><span className="text-neutral-400">Rate limit approaching</span></div>
+                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">10:44:14</span><span className="text-indigo-400">[agent]</span><span className="text-neutral-400">New session started</span></div>
+                  <div className="flex gap-2"><span className="text-neutral-600 shrink-0">10:44:17</span><span className="text-emerald-400">[route]</span><span className="text-neutral-400">Health check passed</span></div>
                 </div>
               </div>
 
-              {/* Medusa-style Settings Grid */}
+              {/* Quick Actions Grid */}
               <div className="rounded-xl border border-white/[0.06] bg-[#09090b] p-3">
                 <h3 className="text-[10px] font-semibold tracking-wider text-neutral-400 uppercase mb-3">Quick Actions</h3>
                 <div className="grid grid-cols-2 gap-2">
@@ -177,11 +207,8 @@ export default function MyndDashboardRoot() {
               </div>
             </div>
           </aside>
-        </main>
-      </div>
-
-      {/* Command Palette Overlay */}
-      <MyndCommandPalette />
+        </div>
+      </main>
     </div>
   );
 }
