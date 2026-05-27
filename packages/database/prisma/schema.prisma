@@ -1,0 +1,115 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================================================
+// DUB.CO + HULY LOOK: CORE ORGANIZATION & WORKSPACE SCHEMA
+// ============================================================================
+model User {
+  id          String            @id @default(cuid())
+  email       String            @unique
+  name        String?
+  createdAt   DateTime          @default(now())
+  memberships WorkspaceMember[]
+}
+
+model Workspace {
+  id          String            @id @default(cuid())
+  name        String
+  slug        String            @unique
+  createdAt   DateTime          @default(now())
+  members     WorkspaceMember[]
+  agents      AiAgent[]
+  crmContacts CrmContact[]
+  networkLogs NetworkLog[]
+}
+
+model WorkspaceMember {
+  id          String    @id @default(cuid())
+  role        String    @default("MEMBER")
+  userId      String
+  workspaceId String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+// ============================================================================
+// TYPEBOT LOOK: AI AGENTS & NODE WORKFLOW SCHEMA
+// ============================================================================
+model AiAgent {
+  id           String      @id @default(cuid())
+  name         String
+  status       String      @default("IDLE")
+  systemPrompt String      @db.Text
+  workspaceId  String
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  nodes        AgentNode[]
+  executionRuns AgentRun[]
+}
+
+model AgentNode {
+  id       String   @id @default(cuid())
+  type     String
+  positionX Float
+  positionY Float
+  config   Json
+  agentId  String
+  agent    AiAgent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================================
+// TRIGGER.DEV LOOK: OBSERVABILITY, TELEMETRY, & WATERFALL LOGS
+// ============================================================================
+model AgentRun {
+  id         String      @id @default(cuid())
+  status     String
+  durationMs Int
+  createdAt  DateTime    @default(now())
+  agentId    String
+  agent      AiAgent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  traces     LogTrace[]
+}
+
+model LogTrace {
+  id           String    @id @default(cuid())
+  stepName     String
+  percentage   Int
+  durationStr  String
+  runId        String
+  run          AgentRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================================
+// TWENTY LOOK: ADVANCED OBJECT-CENTRIC CRM DATA SCHEMA
+// ============================================================================
+model CrmContact {
+  id            String    @id @default(cuid())
+  firstName     String
+  lastName      String
+  email         String
+  company       String
+  pipelineStage String
+  workspaceId   String
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+}
+
+// ============================================================================
+// UNKEY LOOK: NETWORKING METRICS & INFRASTRUCTURE LOGS
+// ============================================================================
+model NetworkLog {
+  id          String    @id @default(cuid())
+  endpoint    String
+  statusCode  Int
+  ipAddress   String
+  latencyMs   Int
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+}

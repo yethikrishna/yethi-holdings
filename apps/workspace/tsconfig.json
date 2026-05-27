@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@mynd/ui": ["../../packages/ui/src"]
+      "@mynd/ui": ["../../packages/ui/src"],
+      "@mynd/database": ["../../packages/database"]
     }
   },
   "include": [
